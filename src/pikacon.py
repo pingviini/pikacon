@@ -6,7 +6,7 @@ from pika import (PlainCredentials, ConnectionParameters, SelectConnection)
 from config import ConnectionConfig
 
 
-logger = logging.getLogger("jyu_amqplib")
+logger = logging.getLogger("pikacon")
 
 
 class BrokerConnection(object):
