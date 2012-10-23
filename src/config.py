@@ -2,7 +2,7 @@ import logging
 import ConfigParser
 
 
-logger = logging.getLogger("jyu_amqplib")
+logger = logging.getLogger("pikacon")
 
 
 class ConnectionConfig(object):
@@ -32,6 +32,10 @@ class ConnectionConfig(object):
         return self.parser.get("broker", "vhost")
 
     @property
+    def heartbeat(self):
+        return self.parser.get("broker", "heartbeat")
+
+    @property
     def exchanges(self):
         """Return list of exchanges"""
         return self.get_config("exchange")
@@ -44,7 +48,7 @@ class ConnectionConfig(object):
     def get_config(self, config_for):
         """Return list of sections which are for specified config"""
 
-        sections = []
+        sections = {}
 
         for section in self.parser.sections():
             if section != "broker" and\
@@ -59,6 +63,6 @@ class ConnectionConfig(object):
                     except ValueError:
                         items[option] = self.parser.get(section, option)
 
-                sections.append({section: items})
+                sections[section] = items
 
         return sections
