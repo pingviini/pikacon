@@ -45,5 +45,11 @@ Below is an example of config file::
     durable = False
     exclusive = True
 
+    [binding1]
+    config_for = binding
+    queue = queue1
+    exchange = exchange
+    routing_key= routing
+
 In above example config_for tells the parser what kind of config this section
 contains. Rest of the parameters are regular pika parameters.
