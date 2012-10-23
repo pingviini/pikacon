@@ -25,7 +25,6 @@ setup(name="pikacon",
       install_requires=[
           "setuptools",
           "pika",
-          "msgpack-python",
       ],
       test_suite="tests",
       )
