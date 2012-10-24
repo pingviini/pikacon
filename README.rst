@@ -49,7 +49,6 @@ Below is an example of config file::
 
     [queue1]
     config_for = queue
-    name = queue1
     durable = False
     exclusive = True
 
