@@ -22,9 +22,10 @@ logger.addHandler(ch)
 class BrokerConnection(object):
     """Connection class which provides connection to AMQP broker."""
 
-    def __init__(self, config=None):
+    def __init__(self, config, callback):
         self.reconnection_delay = 1.0
 
+        self.caller_callback = callback
         self.config = ConnectionConfig(config)
         self.callbacks = self.set_callbacks()
 
@@ -109,9 +110,8 @@ class BrokerConnection(object):
             del config['config_for']
             self.channel.queue_bind(**config)
 
-        #else:
-            # Start the loop
-        #    self.loop()
+        else:
+            self.caller_callback()
 
     def reset_reconnection_delay(self, *args):
         self.reconnection_delay = 1.0
