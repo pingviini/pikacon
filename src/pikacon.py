@@ -45,8 +45,10 @@ class BrokerConnection(object):
 
     def set_callbacks(self):
         """Set callbacks for queue factory."""
+
         self.exchange_callbacks = []
         self.queue_callbacks = []
+        self.binding_callbacks = []
 
         for exchange in self.config.exchanges:
             tmp = {}
@@ -56,6 +58,9 @@ class BrokerConnection(object):
 
         for queue in self.config.queues:
             self.queue_callbacks.append(self.config.queues[queue])
+
+        for binding in self.config.bindings:
+            self.binding_callbacks.append(self.config.bindings[binding])
 
     def get_exchange_callback(self):
         self.exchange_callbacks.popitem()
