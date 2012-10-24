@@ -14,7 +14,8 @@ class TestConfigParser(unittest.TestCase):
         self.assertEqual(self.config.host, "localhost")
 
     def test_port(self):
-        self.assertEqual(self.config.port, "5672")
+        self.assertTrue(isinstance(self.config.port, int))
+        self.assertEqual(self.config.port, 5672)
 
     def test_username(self):
         self.assertEqual(self.config.username, "guest")
