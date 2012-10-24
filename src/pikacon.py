@@ -64,31 +64,39 @@ class BrokerConnection(object):
         self.queue_callbacks.popitem()
 
     def generic_callback(self, channel=None, frame=None):
-        """Return callback from list."""
+        """Create exchanges, queues and bindings."""
 
         if channel and frame:
             # You could do error handling here
             # or add code for anonymous queue handling
             pass
 
-        while self.exchange_callbacks:
+        if self.exchange_callbacks:
             config = self.exchange_callbacks.pop()
+            logger.info("Creating exchang %s." % config['exchange_name'])
             config.update({"callback": self.generic_callback})
             del config['config_for']
             self.channel.exchange_declare(**config)
 
-        while self.queue_callbacks:
+        elif self.queue_callbacks:
             config = self.queue_callbacks.pop()
+            logger.info("Creating queue %s." % config['name'])
             config.update({"callback": self.generic_callback})
             del config['config_for']
             self.channel.queue_declare(**config)
 
-        # elif self.queue_bindings:
-        #     config = self.bindings_callbacks.pop()
-        #     config.update({"callback": self.generic_callback})
-        #     self.channel.queue_bind(**config)
+        elif self.queue_bindings:
+            config = self.bindings_callbacks.pop()
+            logger.info("Creating binding %s -> %s with routing key %s" %\
+                        (config['exchange'], config['queue'],
+                         config['routing_key']))
+            config.update({"callback": self.generic_callback})
+            del config['config_for']
+            self.channel.queue_bind(**config)
 
-        self.loop()
+        else:
+            # Start the loop
+            self.loop()
 
     def reset_reconnection_delay(self):
         self.reconnection_delay = 1.0
