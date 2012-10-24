@@ -2,11 +2,21 @@ import logging
 import socket
 import time
 import random
+from ConfigParser import NoOptionError
 from pika import (PlainCredentials, ConnectionParameters, SelectConnection)
 from config import ConnectionConfig
 
 
+logger = logging.getLogger("pika")
+logger.setLevel(logging.DEBUG)
+
 logger = logging.getLogger("pikacon")
+logger.setLevel(logging.DEBUG)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+
+logger.addHandler(ch)
 
 
 class BrokerConnection(object):
@@ -14,6 +24,7 @@ class BrokerConnection(object):
 
     def __init__(self, config=None):
         self.reconnection_delay = 1.0
+
         self.config = ConnectionConfig(config)
         self.callbacks = self.set_callbacks()
 
@@ -21,13 +32,15 @@ class BrokerConnection(object):
                                        password=self.config.password)
 
         parameters = ConnectionParameters(host=self.config.host,
-                                          port=int(self.config.port),
+                                          port=self.config.port,
                                           virtual_host=self.config.vhost,
-                                          credentials=credentials)
+                                          credentials=credentials,
+                                          heartbeat=True)
 
-        parameters.heartbeat = self.config.heartbeat
-
-        self.cancel_requests_queue = None
+        try:
+            parameters.heartbeat = self.config.heartbeat
+        except NoOptionError:
+            pass
 
         self.connection = SelectConnection(parameters, self.on_connected)
 
@@ -40,7 +53,7 @@ class BrokerConnection(object):
         """Called when channel has opened"""
         logger.info("Channel to AMQP-broker opened.")
         self.channel = new_channel
-#        self.channel.add_on_close_callback(self.on_channel_closed)
+        self.channel.add_on_close_callback(self.on_channel_closed)
         self.generic_callback()
 
     def set_callbacks(self):
@@ -52,21 +65,18 @@ class BrokerConnection(object):
 
         for exchange in self.config.exchanges:
             tmp = {}
-            tmp['name'] = exchange
+            tmp['exchange'] = exchange
             tmp.update(self.config.exchanges[exchange])
             self.exchange_callbacks.append(tmp)
 
         for queue in self.config.queues:
-            self.queue_callbacks.append(self.config.queues[queue])
+            tmp = {}
+            tmp['queue'] = queue
+            tmp.update(self.config.queues[queue])
+            self.queue_callbacks.append(tmp)
 
         for binding in self.config.bindings:
             self.binding_callbacks.append(self.config.bindings[binding])
-
-    def get_exchange_callback(self):
-        self.exchange_callbacks.popitem()
-
-    def get_queue_callback(self):
-        self.queue_callbacks.popitem()
 
     def generic_callback(self, channel=None, frame=None):
         """Create exchanges, queues and bindings."""
@@ -78,32 +88,32 @@ class BrokerConnection(object):
 
         if self.exchange_callbacks:
             config = self.exchange_callbacks.pop()
-            logger.info("Creating exchang %s." % config['exchange_name'])
+            logger.info("Creating exchange %s." % config['exchange'])
             config.update({"callback": self.generic_callback})
             del config['config_for']
             self.channel.exchange_declare(**config)
 
         elif self.queue_callbacks:
             config = self.queue_callbacks.pop()
-            logger.info("Creating queue %s." % config['name'])
+            logger.info("Creating queue %s." % config['queue'])
             config.update({"callback": self.generic_callback})
             del config['config_for']
             self.channel.queue_declare(**config)
 
-        elif self.queue_bindings:
-            config = self.bindings_callbacks.pop()
-            logger.info("Creating binding %s -> %s with routing key %s" %\
+        elif self.binding_callbacks:
+            config = self.binding_callbacks.pop()
+            logger.info("Creating binding (%s -> %s) with routing key %s" %\
                         (config['exchange'], config['queue'],
                          config['routing_key']))
             config.update({"callback": self.generic_callback})
             del config['config_for']
             self.channel.queue_bind(**config)
 
-        else:
+        #else:
             # Start the loop
-            self.loop()
+        #    self.loop()
 
-    def reset_reconnection_delay(self):
+    def reset_reconnection_delay(self, *args):
         self.reconnection_delay = 1.0
 
     def loop(self):
