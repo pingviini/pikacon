@@ -42,3 +42,11 @@ class TestConfigParser(unittest.TestCase):
                                       'name': 'testqueue-2',
                                       'durable': False,
                                       'exclusive': True}})
+
+    def test_get_bindings(self):
+        self.assertEqual(self.config.bindings,
+                         {'binding1': {'config_for': 'binding',
+                                      'queue': 'queue1',
+                                      'exchange': 'exchange',
+                                      'routing_key': 'routing'}})
+

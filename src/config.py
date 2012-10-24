@@ -45,6 +45,11 @@ class ConnectionConfig(object):
         """Return list of queues"""
         return self.get_config("queue")
 
+    @property
+    def bindings(self):
+        """Return list of bindings"""
+        return self.get_config("binding")
+
     def get_config(self, config_for):
         """Return list of sections which are for specified config"""
 
