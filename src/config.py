@@ -17,7 +17,7 @@ class ConnectionConfig(object):
 
     @property
     def port(self):
-        return self.parser.get("broker", "port")
+        return self.parser.getint("broker", "port")
 
     @property
     def username(self):
