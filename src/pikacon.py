@@ -2,9 +2,10 @@ import logging
 import socket
 import time
 import random
+
 from ConfigParser import NoOptionError
 from pika import (PlainCredentials, ConnectionParameters, SelectConnection)
-from config import ConnectionConfig
+from pikaconconfig import ConnectionConfig
 
 
 logger = logging.getLogger("pika")
@@ -77,7 +78,10 @@ class BrokerConnection(object):
             self.queue_callbacks.append(tmp)
 
         for binding in self.config.bindings:
-            self.binding_callbacks.append(self.config.bindings[binding])
+            tmp = {}
+            tmp['binding'] = binding
+            tmp.update(self.config.bindings[binding])
+            self.binding_callbacks.append(tmp)
 
     def generic_callback(self, channel=None, frame=None):
         """Create exchanges, queues and bindings."""
@@ -108,9 +112,12 @@ class BrokerConnection(object):
                          config['routing_key']))
             config.update({"callback": self.generic_callback})
             del config['config_for']
+            del config['binding']
             self.channel.queue_bind(**config)
 
         else:
+            logger.info("RabbitMQ exchanges, queues and bindings are now "
+                        "configured.")
             self.caller_callback()
 
     def reset_reconnection_delay(self, *args):

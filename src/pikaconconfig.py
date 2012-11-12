@@ -56,11 +56,18 @@ class ConnectionConfig(object):
         sections = {}
 
         for section in self.parser.sections():
-            if section != "broker" and\
-                self.parser.get(section, "config_for") == config_for:
+            try:
+                assert(section != "broker")
+                assert(self.parser.get(section, "config_for") == config_for)
 
                 options = self.parser.options(section)
                 items = {}
+
+                if 'arguments' in options:
+                    arguments_name = self.parser.get(section, 'arguments')
+                    arguments = self.get_arguments(arguments_name)
+                    items['arguments'] = arguments
+                    options.remove('arguments')
 
                 for option in options:
                     try:
@@ -69,5 +76,26 @@ class ConnectionConfig(object):
                         items[option] = self.parser.get(section, option)
 
                 sections[section] = items
+            except ConfigParser.NoOptionError:
+                # Config file has configuration which doesn't belong to
+                # pikacon so we ignore it.
+                pass
+            except AssertionError:
+                # We're parsing broker section which will be ignored too.
+                pass
 
         return sections
+
+    def get_arguments(self, name):
+        """Return dict of arguments for section"""
+
+        kw = {}
+        options = self.parser.options(name)
+
+        for option in options:
+            try:
+                kw[option] = self.parser.getint(name, option)
+            except ValueError:
+                kw[option] = self.parser.get(name, option)
+
+        return kw
