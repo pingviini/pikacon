@@ -40,7 +40,7 @@ class BrokerConnection(object):
                                           heartbeat=True)
 
         try:
-            parameters.heartbeat = self.config.heartbeat
+            parameters.heartbeat = int(self.config.heartbeat)
         except NoOptionError:
             pass
 
