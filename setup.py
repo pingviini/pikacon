@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = "0.1"
+version = "0.2"
 
 setup(name="pikacon",
       version=version,
@@ -18,6 +18,10 @@ setup(name="pikacon",
       author_email="jukka.ojaniemi@jyu.fi",
       url="https://github.com/pingviini/pikacon",
       license="GPL",
+      py_modules=[
+        'pikacon',
+        'pikaconconfig'
+      ],
       packages=find_packages("src", exclude=["ez_setup"]),
       package_dir={"": "src"},
       include_package_data=True,
