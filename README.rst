@@ -54,8 +54,10 @@ Exchange
 --------
 
 Section name for exchange consists of two parts divided by ':'. First part is
-'exchange' and second part is the name of the exchange (eg.
-[exchange:myexchange]).
+'exchange' and second part is the name of the exchange. Eg.::
+
+    [exchange:myexchange]
+    ...
 
 The actual options below exchange section are normal key = value parameters
 which are used in pika.
@@ -64,9 +66,12 @@ Queue
 -----
 
 The section for queue consits of two parts divided by ':'. First part is
-'queue' and second part is the name of the queue (eg. [queue:myqueue]).
+'queue' and second part is the name of the queue. Eg.::
+
+    [queue:myqueue]
 
 The options below queue section are::
+
     durable = True|False
     exclusive = True|False
     arguments = queue:queuename:arguments
@@ -83,8 +88,9 @@ Binding
 
 The name of the binding section consists three parts divided by ':'. First
 part is always 'binding'. Second part is the name of the queue we're binding.
-Third part is name of the exchange where we're binding the queue. (eg.
-[binding:myqueue:myexchange]).
+Third part is name of the exchange where we're binding the queue. Eg.::
+
+    [binding:myqueue:myexchange]
 
 The actual options below binding section are normal key = value parameters
 which are used in pika.
@@ -92,6 +98,7 @@ which are used in pika.
 Complete configuration example
 ------------------------------
 ::
+
     [broker]
     host = localhost
     port = 5672
