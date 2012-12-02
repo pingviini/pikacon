@@ -1,5 +1,6 @@
 import unittest
-from config import ConnectionConfig
+
+from pikaconconfig import ConnectionConfig
 
 
 config = 'tests/test_config.cfg'
@@ -8,7 +9,8 @@ config = 'tests/test_config.cfg'
 class TestConfigParser(unittest.TestCase):
 
     def setUp(self):
-        self.config = ConnectionConfig(config)
+        self.config = ConnectionConfig()
+        self.config.read(config)
 
     def test_host(self):
         self.assertEqual(self.config.host, "localhost")
@@ -28,26 +30,28 @@ class TestConfigParser(unittest.TestCase):
 
     def test_get_exchanges(self):
         self.assertEqual(self.config.exchanges,
-                         {'exchange': {'config_for': 'exchange',
-                                        'durable': False,
-                                        'type': 'topic',
-                                        'auto_delete': True}})
+                         {'exchange:exchangename':
+                            {'durable': False,
+                             'type': 'topic',
+                             'auto_delete': True}})
 
     def test_get_queues(self):
         self.assertEqual(self.config.queues,
-                         {'queue1': {'config_for': 'queue',
-                                      'name': 'testqueue-1',
-                                      'durable': False,
-                                      'exclusive': True},
-                          'queue2': {'config_for': 'queue',
-                                      'name': 'testqueue-2',
-                                      'durable': False,
-                                      'exclusive': True}})
+                         {'queue:testqueue2':
+                            {'exclusive': True, 'durable': False},
+                          'queue:testqueue3':
+                            {'exclusive': True, 'durable': False,
+                             'arguments': {'x-message-ttl': 1800000,
+                                           'x-dead-letter-exchange': 'exchangename',
+                                           'x-dead-letter-routing-key': 'key3'}},
+                          'queue:testqueue1': {'exclusive': True,
+                                               'durable': False}})
 
     def test_get_bindings(self):
         self.assertEqual(self.config.bindings,
-                         {'binding1': {'config_for': 'binding',
-                                      'queue': 'queue1',
-                                      'exchange': 'exchange',
-                                      'routing_key': 'routing'}})
-
+                         {'binding:testqueue1:exchangename':
+                            {'routing_key': 'key1'},
+                          'binding:testqueue2:exchangename':
+                            {'routing_key': 'key2'},
+                          'binding:testqueue3:exchangename':
+                            {'routing_key': 'key3'}})

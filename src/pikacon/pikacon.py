@@ -5,7 +5,7 @@ import random
 
 from ConfigParser import NoOptionError
 from pika import (PlainCredentials, ConnectionParameters, SelectConnection)
-from pikaconconfig import ConnectionConfig
+from config import ConnectionConfig
 
 
 logger = logging.getLogger("pika")
@@ -25,19 +25,27 @@ class BrokerConnection(object):
 
     def __init__(self, config, callback):
         self.reconnection_delay = 1.0
-
         self.caller_callback = callback
-        self.config = ConnectionConfig(config)
+        self.config = ConnectionConfig()
+        self.config.read(config)
         self.callbacks = self.set_callbacks()
 
-        credentials = PlainCredentials(username=self.config.username,
-                                       password=self.config.password)
+        credentials = PlainCredentials(**self.config.credentials)
 
-        parameters = ConnectionParameters(host=self.config.host,
-                                          port=self.config.port,
-                                          virtual_host=self.config.vhost,
-                                          credentials=credentials,
-                                          heartbeat=True)
+        broker_config = self.config.broker_config
+        broker_config['credentials'] = credentials
+
+        parameters = ConnectionParameters(**broker_config)
+
+        try:
+            parameters.host = self.config.host
+        except NoOptionError:
+            pass
+
+        try:
+            parameters.heartbeat = int(self.config.heartbeat)
+        except NoOptionError:
+            pass
 
         try:
             parameters.heartbeat = int(self.config.heartbeat)
@@ -93,26 +101,28 @@ class BrokerConnection(object):
 
         if self.exchange_callbacks:
             config = self.exchange_callbacks.pop()
+            config['exchange'] = config['exchange'].split(':', 1)[-1]
             logger.info("Creating exchange %s." % config['exchange'])
             config.update({"callback": self.generic_callback})
-            del config['config_for']
             self.channel.exchange_declare(**config)
 
         elif self.queue_callbacks:
             config = self.queue_callbacks.pop()
+            config['queue'] = config['queue'].split(':', 1)[-1]
             logger.info("Creating queue %s." % config['queue'])
             config.update({"callback": self.generic_callback})
-            del config['config_for']
             self.channel.queue_declare(**config)
 
         elif self.binding_callbacks:
             config = self.binding_callbacks.pop()
+            binding = config['binding'].split(':')
+            del config['binding']
+            config['exchange'] = binding[-1]
+            config['queue'] = binding[1]
             logger.info("Creating binding (%s -> %s) with routing key %s" %\
                         (config['exchange'], config['queue'],
                          config['routing_key']))
             config.update({"callback": self.generic_callback})
-            del config['config_for']
-            del config['binding']
             self.channel.queue_bind(**config)
 
         else:
@@ -129,7 +139,8 @@ class BrokerConnection(object):
         while True:
             try:
                 logger.info("Starting main loop")
-                self.connection.add_on_open_callback(self.reset_reconnection_delay)
+                self.connection.add_on_open_callback(
+                        self.reset_reconnection_delay)
                 self.connection.ioloop.start()
             except socket.error as e:
                 logger.error("Connection failed or closed unexpectedly: %s", e)
