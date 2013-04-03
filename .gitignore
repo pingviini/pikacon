@@ -1,4 +1,6 @@
 *.egg
 *~
+*.egg-info
 build
 dist
+docs/build

@@ -1,17 +1,21 @@
 from setuptools import setup, find_packages
 
-version = "0.3.1"
+version = "0.3.2"
 
 setup(name="pikacon",
       version=version,
-      description="Helper library for using pika.",
-      long_description=open("README.rst").read() + "\n" +
-                       open("docs/HISTORY.rst").read(),
+      description="Ini-style configuration for pika.",
+      long_description="%s\n%s" % (
+          open("README.rst").read(),
+          open("CHANGES.rst").read()),
       classifiers=[
           "Programming Language :: Python :: 2.6",
           "Programming Language :: Python :: 2.7",
+          "Intended Audience :: Developers",
+          "License :: OSI Approved :: GNU General Public License (GPL)",
+          "Operating System :: OS Independent",
       ],
-      keywords="",
+      keywords="pikacon pika ini queue exchange connection amqp",
       author="Jukka Ojaniemi",
       author_email="jukka.ojaniemi@jyu.fi",
       url="https://github.com/pingviini/pikacon",
@@ -24,5 +28,8 @@ setup(name="pikacon",
           "setuptools",
           "pika>=0.9.8",
       ],
+      extras_require={
+          'develop': ['Sphinx'],
+      },
       test_suite="tests",
       )
