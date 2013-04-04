@@ -26,7 +26,7 @@ setup(name="pikacon",
       zip_safe=False,
       install_requires=[
           "setuptools",
-          "pika>=0.9.8",
+          "pika>=0.9.12",
       ],
       extras_require={
           'develop': ['Sphinx'],

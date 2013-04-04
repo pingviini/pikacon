@@ -157,6 +157,7 @@ class BrokerConnection(object):
                             self.reconnection_delay)
                 time.sleep(self.reconnection_delay)
 
-    def on_channel_closed(self, code, text):
-        logger.warning("Channel closed with reason '%s %s'", code, text)
+    def on_channel_closed(self, channel, code, text):
+        logger.warning("Channel %i closed with reason '%s %s'",
+                       channel, code, text)
         self.connection.close(code, text)
