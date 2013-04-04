@@ -119,9 +119,9 @@ class BrokerConnection(object):
             del config['binding']
             config['exchange'] = binding[-1]
             config['queue'] = binding[1]
-            logger.info("Creating binding (%s -> %s) with routing key %s" %\
-                        (config['exchange'], config['queue'],
-                         config['routing_key']))
+            logger.info("Creating binding (%s -> %s) with routing key %s" % (
+                config['exchange'], config['queue'],
+                config['routing_key']))
             config.update({"callback": self.generic_callback})
             self.channel.queue_bind(**config)
 
@@ -140,7 +140,7 @@ class BrokerConnection(object):
             try:
                 logger.info("Starting main loop")
                 self.connection.add_on_open_callback(
-                        self.reset_reconnection_delay)
+                    self.reset_reconnection_delay)
                 self.connection.ioloop.start()
             except socket.error as e:
                 logger.error("Connection failed or closed unexpectedly: %s", e)
@@ -157,7 +157,7 @@ class BrokerConnection(object):
                             self.reconnection_delay)
                 time.sleep(self.reconnection_delay)
 
-    def on_channel_closed(self, channel, code, text):
-        logger.warning("Channel %i closed with reason '%s %s'",
-                       channel, code, text)
+    def on_channel_closed(self, code, text):
+        logger.warning("Channel closed with reason '%s %s'",
+                       code, text)
         self.connection.close(code, text)
