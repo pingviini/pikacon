@@ -15,19 +15,11 @@ program. Class takes a path to ini-style config file as a parameter and creates
 connection, exchanges, queues and bindings automatically from there. All you
 need to provide is a proper config.
 
-Pikacon's processing order is following:
-
-1. Connection
-2. Channel
-3. Exchanges
-4. Queues
-5. Bindings
-
-
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
    Configuration <configuration>
-   Example <example>
+   Integration example <example>
+   Source code <source>

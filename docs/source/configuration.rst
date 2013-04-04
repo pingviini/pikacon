@@ -44,6 +44,17 @@ Third part is name of the exchange where we're binding the queue. Eg.::
 The actual options below binding section are normal key = value parameters
 which are used in pika.
 
+Processing order
+----------------
+
+Pikacon's processing order is following:
+
+1. Connection
+2. Channel
+3. Exchanges
+4. Queues
+5. Bindings
+
 Complete configuration example
 ------------------------------
 ::
