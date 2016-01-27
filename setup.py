@@ -39,4 +39,4 @@ setup(name="pikacon",
           'tests': ['pytest', 'tox'],
       },
       test_suite="tests",
-      )
+)
