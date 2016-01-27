@@ -2,6 +2,8 @@
 *~
 *.egg-info
 *.pyc
+.tox
+.cache
 build
 dist
 docs/build

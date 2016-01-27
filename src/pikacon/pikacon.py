@@ -1,11 +1,34 @@
-import logging
-import socket
-import time
-import random
+"""
+This file is part of pikacon.
 
-from ConfigParser import NoOptionError
-from pika import (PlainCredentials, ConnectionParameters, SelectConnection)
-from config import ConnectionConfig
+Pikacon is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Pikacon is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with pikacon.  If not, see <http://www.gnu.org/licenses/>.
+"""
+import logging
+import random
+import socket
+import sys
+import time
+
+PY2 = sys.version_info < (3,)
+if PY2:
+    from ConfigParser import NoOptionError  # NOQA
+else:
+    from configparser import NoOptionError  # NOQA
+
+from pika import PlainCredentials, ConnectionParameters, SelectConnection
+
+from pikacon.config import ConnectionConfig
 
 
 logger = logging.getLogger("pika")
@@ -22,13 +45,17 @@ logger.addHandler(ch)
 
 class BrokerConnection(object):
     """Connection class which provides connection to AMQP broker."""
+    exchange_callbacks = []
+    queue_callbacks = []
+    binding_callbacks = []
+    channel = None
 
     def __init__(self, config, callback):
         self.reconnection_delay = 1.0
         self.caller_callback = callback
         self.config = ConnectionConfig()
         self.config.read(config)
-        self.callbacks = self.set_callbacks()
+        self.set_callbacks()
 
         credentials = PlainCredentials(**self.config.credentials)
 
@@ -68,10 +95,6 @@ class BrokerConnection(object):
 
     def set_callbacks(self):
         """Set callbacks for queue factory."""
-
-        self.exchange_callbacks = []
-        self.queue_callbacks = []
-        self.binding_callbacks = []
 
         for exchange in self.config.exchanges:
             tmp = {}

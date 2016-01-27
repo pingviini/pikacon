@@ -9,8 +9,8 @@ declaring exchanges and queues.
 Requirements
 ============
 
-* python 2.7
-* pika >= 0.9.8
+* python 2.7, 3.3, 3.4, 3.5
+* pika >= 0.10.0
 
 Usage
 =====

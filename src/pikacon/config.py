@@ -1,11 +1,34 @@
+"""
+This file is part of pikacon.
+
+Pikacon is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Pikacon is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with pikacon.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 import logging
-import ConfigParser
+import sys
+
+PY2 = sys.version_info < (3,)
+if PY2:
+    from ConfigParser import SafeConfigParser as ConfigParser, NoOptionError
+else:
+    from configparser import ConfigParser, NoOptionError
 
 
 logger = logging.getLogger("pikacon")
 
 
-class ConnectionConfig(ConfigParser.SafeConfigParser):
+class ConnectionConfig(ConfigParser):
     """
     ConnectionConfig provides all the attributes pika needs for creating
     connection, exchanges, queues and bindings.
@@ -24,21 +47,21 @@ class ConnectionConfig(ConfigParser.SafeConfigParser):
             try:
                 config[option] = self.getint("broker", option)
                 converted.append(option)
-            except ConfigParser.NoOptionError:
+            except NoOptionError:
                 pass
 
         for option in convert_to_float:
             try:
                 config[option] = self.getfloat("broker", option)
                 converted.append(option)
-            except ConfigParser.NoOptionError:
+            except NoOptionError:
                 pass
 
         for option in convert_to_bool:
             try:
                 config[option] = self.getfloat("broker", option)
                 converted.append(option)
-            except ConfigParser.NoOptionError:
+            except NoOptionError:
                 pass
 
         for option in self.options("broker"):
@@ -70,14 +93,14 @@ class ConnectionConfig(ConfigParser.SafeConfigParser):
     def username(self):
         try:
             return self.get("broker", "username")
-        except ConfigParser.NoOptionError:
+        except NoOptionError:
             return 'guest'
 
     @property
     def password(self):
         try:
             return self.get("broker", "password")
-        except ConfigParser.NoOptionError:
+        except NoOptionError:
             return 'guest'
 
     @property
@@ -161,7 +184,7 @@ class ConnectionConfig(ConfigParser.SafeConfigParser):
                         items[option] = self.get(section, option)
 
                 sections[section] = items
-            except ConfigParser.NoOptionError:
+            except NoOptionError:
                 # Config file has configuration which doesn't belong to
                 # pikacon so we ignore it.
                 pass
@@ -174,7 +197,7 @@ class ConnectionConfig(ConfigParser.SafeConfigParser):
     @property
     def get_exchanges(self):
         """Returns list of Exchange objects."""
-
+        return
 
     def get_arguments(self, name):
         """Return dict of arguments for section"""
