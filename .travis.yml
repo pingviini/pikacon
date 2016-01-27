@@ -6,5 +6,6 @@ python:
   - "3.5"
   - "pypy"
 install:
-  - pip install .[tests]
+  - pip install .
+  - pip install -r requirements_tests.pip
 script: tox
