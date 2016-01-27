@@ -6,6 +6,9 @@
 Welcome to Pikacon's documentation!
 ===================================
 
+.. image:: https://travis-ci.org/pingviini/pikacon.svg?branch=master
+:target: https://travis-ci.org/pingviini/pikacon
+
 Pikacon is a helper library which will reduce the amount of boilerplate your
 software needs when it is using pika for creating connection to broker and
 declaring exchanges and queues.
