@@ -28,7 +28,7 @@ else:
 
 from pika import PlainCredentials, ConnectionParameters, SelectConnection
 
-from pikacon.config import ConnectionConfig
+from .config import ConnectionConfig
 
 
 logger = logging.getLogger("pika")
@@ -51,6 +51,9 @@ class BrokerConnection(object):
     channel = None
 
     def __init__(self, config, callback):
+        self.closing = False
+        self.channel = None
+        self.connection = None
         self.reconnection_delay = 1.0
         self.caller_callback = callback
         self.config = ConnectionConfig()
@@ -62,29 +65,61 @@ class BrokerConnection(object):
         broker_config = self.config.broker_config
         broker_config['credentials'] = credentials
 
-        parameters = ConnectionParameters(**broker_config)
+        self.parameters = ConnectionParameters(**broker_config)
 
         try:
-            parameters.host = self.config.host
+            self.parameters.host = self.config.host
         except NoOptionError:
             pass
 
         try:
-            parameters.heartbeat = int(self.config.heartbeat)
+            self.parameters.heartbeat_interval = int(
+                self.config.heartbeat_interval)
         except NoOptionError:
             pass
 
-        try:
-            parameters.heartbeat = int(self.config.heartbeat)
-        except NoOptionError:
-            pass
+        self.connect()
 
-        self.connection = SelectConnection(parameters, self.on_connected)
+    def connect(self):
+        """
+
+        :param parameters:
+        :return:
+        """
+        self.connection = SelectConnection(self.parameters, self.on_connected,
+                                           stop_ioloop_on_close=False)
 
     def on_connected(self, connection):
         """Called when we're connected to AMQP broker."""
-        logger.info("Connected to AMQP-broker.")
+        print("Connected to AMQP-broker.")
+        self.add_on_connection_close_callback()
         connection.channel(self.on_channel_open)
+
+    def add_on_connection_close_callback(self):
+        """This method adds an on close callback that will be invoked by pika
+        when RabbitMQ closes the connection to the publisher unexpectedly.
+
+        """
+        print('Adding connection close callback')
+        self.connection.add_on_close_callback(self.on_connection_closed)
+
+    def on_connection_closed(self, connection, reply_code, reply_text):
+        """This method is invoked by pika when the connection to RabbitMQ is
+        closed unexpectedly. Since it is unexpected, we will reconnect to
+        RabbitMQ if it disconnects.
+
+        :param pika.connection.Connection connection: The closed connection obj
+        :param int reply_code: The server provided reply_code if given
+        :param str reply_text: The server provided reply_text if given
+
+        """
+        self.channel = None
+        if self.closing:
+            self.connection.ioloop.stop()
+        else:
+            print('Connection closed, reopening in 5 seconds: (%s) %s',
+                  reply_code, reply_text)
+            self.connection.add_timeout(5, self.reconnect)
 
     def on_channel_open(self, new_channel):
         """Called when channel has opened"""
@@ -97,20 +132,17 @@ class BrokerConnection(object):
         """Set callbacks for queue factory."""
 
         for exchange in self.config.exchanges:
-            tmp = {}
-            tmp['exchange'] = exchange
+            tmp = {'exchange': exchange}
             tmp.update(self.config.exchanges[exchange])
             self.exchange_callbacks.append(tmp)
 
         for queue in self.config.queues:
-            tmp = {}
-            tmp['queue'] = queue
+            tmp = {'queue': queue}
             tmp.update(self.config.queues[queue])
             self.queue_callbacks.append(tmp)
 
         for binding in self.config.bindings:
-            tmp = {}
-            tmp['binding'] = binding
+            tmp = {'binding': binding}
             tmp.update(self.config.bindings[binding])
             self.binding_callbacks.append(tmp)
 
@@ -166,9 +198,11 @@ class BrokerConnection(object):
                     self.reset_reconnection_delay)
                 self.connection.ioloop.start()
             except socket.error as e:
-                logger.error("Connection failed or closed unexpectedly: %s", e)
+                logger.error("Connection failed or closed unexpectedly: %s", e,
+                             exc_info=True)
             except TypeError as e:
-                logger.error("Connection failed or closed unexpectedly: %s", e)
+                logger.error("Connection failed or closed unexpectedly: %s", e,
+                             exc_info=True)
             except KeyboardInterrupt:
                 self.connection.close()
                 self.connection.ioloop.start()
@@ -184,3 +218,40 @@ class BrokerConnection(object):
         logger.warning("Channel closed with reason '%s %s'",
                        code, text)
         self.connection.close(code, text)
+
+    def reconnect(self):
+        """Will be invoked by the IOLoop timer if the connection is
+        closed. See the on_connection_closed method.
+
+        """
+        # This is the old connection IOLoop instance, stop its ioloop
+        self.connection.ioloop.stop()
+
+        if not self.closing:
+            # Create a new connection
+            self.connect()
+
+            # There is now a new connection, needs a new ioloop to run
+            self.connection.ioloop.start()
+
+    def add_on_cancel_callback(self):
+        """Add a callback that will be invoked if RabbitMQ cancels the consumer
+        for some reason. If RabbitMQ does cancel the consumer,
+        on_consumer_cancelled will be invoked by pika.
+
+        """
+        print('Adding consumer cancellation callback')
+        self.channel.add_on_cancel_callback(self.on_consumer_cancelled)
+
+    def on_consumer_cancelled(self, method_frame):
+        """
+        Invoked by pika when RabbitMQ sends a Basic.Cancel for a consumer
+        receiving messages.
+
+        :param pika.frame.Method method_frame: The Basic.Cancel frame
+
+        """
+        print('Consumer was cancelled remotely, shutting down: %r' %
+              method_frame)
+        if self.channel:
+            self.channel.close()

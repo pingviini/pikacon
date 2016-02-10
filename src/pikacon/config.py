@@ -108,8 +108,8 @@ class ConnectionConfig(ConfigParser):
         return self.get("broker", "virtual_host")
 
     @property
-    def heartbeat(self):
-        return self.getint("broker", "heartbeat")
+    def heartbeat_interval(self):
+        return self.getint("broker", "heartbeat_interval")
 
     @property
     def channel_max(self):
