@@ -56,8 +56,13 @@ class BrokerConnection(object):
         self.connection = None
         self.reconnection_delay = 1.0
         self.caller_callback = callback
-        self.config = ConnectionConfig()
-        self.config.read(config)
+
+        if isinstance(config, ConnectionConfig):
+            self.config = ConnectionConfig
+        else:
+            self.config = ConnectionConfig()
+            self.config.read(config)
+
         self.set_callbacks()
 
         credentials = PlainCredentials(**self.config.credentials)
