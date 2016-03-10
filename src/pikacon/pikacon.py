@@ -58,7 +58,7 @@ class BrokerConnection(object):
         self.caller_callback = callback
 
         if isinstance(config, ConnectionConfig):
-            self.config = ConnectionConfig
+            self.config = config
         else:
             self.config = ConnectionConfig()
             self.config.read(config)
