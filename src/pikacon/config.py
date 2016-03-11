@@ -16,6 +16,7 @@ along with pikacon.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import logging
+import os
 import sys
 
 PY2 = sys.version_info < (3,)
@@ -65,7 +66,7 @@ class ConnectionConfig(ConfigParser):
                 pass
 
         for option in self.options("broker"):
-            if not option in converted and\
+            if option not in converted and\
                     option not in ["username", "password"]:
                 if option == "ssl_options":
                     ssl_options = dict(self.items(self.get('broker',
@@ -160,6 +161,8 @@ class ConnectionConfig(ConfigParser):
         sections = {}
 
         for section in self.sections():
+            if section.startswith('exchange:'):
+                section = self.get_exchange_section(section)
             try:
                 assert(section != "broker")
                 assert(section.split(':', 1)[0] == section_name)
@@ -193,6 +196,19 @@ class ConnectionConfig(ConfigParser):
                 pass
 
         return sections
+
+    def get_exchange_section(self, section):
+        """Returns exchange section name.
+
+        :param str section: Exchange section name. It name contains '$' we
+                            will try to get the exchange name from os.env.
+        :return str:
+        """
+
+        exchange_name = section.split(':')[1]
+        if exchange_name.startswith('$'):
+            exchange_name = os.environ.get(exchange_name[1:])
+        return 'exchange:{}'.format(exchange_name)
 
     @property
     def get_exchanges(self):
